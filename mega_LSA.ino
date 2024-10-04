@@ -1,8 +1,8 @@
-const float Kp = 0.5; 
-const float Ki = 0.0;
-const float Kd = 0.0;
+const float Kp = 20.0; 
+const float Ki = 0.006;
+const float Kd = 40;
 const int setpoint = 35;    
-const int baseSpeed = 200;  
+const int baseSpeed = 225;  
 const int maxSpeed = 255;   
 int P,D;
 static int I = 0;
@@ -16,87 +16,12 @@ const byte tx = 17;
 #define inp4 39
 #define ENA A4   
 #define ENB A5  
-int positionVal =0;
+int positionVal = 0;
 int error;
 double motorSpeed;
 #define buttonpin 12
-int lastError = 0; 
-void forwards(int rightMotorSpeed,int leftMotorSpeed){
-  
-  digitalWrite(inp1,HIGH);
-  digitalWrite(inp2,LOW);
-  digitalWrite(inp3,HIGH);
-  digitalWrite(inp4,LOW);
-  analogWrite(ENA,rightMotorSpeed);
-  analogWrite(ENB,leftMotorSpeed);
-}
-void backwards(){  
-  digitalWrite(inp1,LOW);
-  digitalWrite(inp2,HIGH);
-  digitalWrite(inp3,LOW);
-  digitalWrite(inp4,HIGH);
-  analogWrite(ENA,100);
-  analogWrite(ENB,100);
-}
 
-void right(){
-  digitalWrite(inp1,HIGH);
-  digitalWrite(inp2,LOW);
-  digitalWrite(inp3,HIGH);
-  digitalWrite(inp4,LOW);
-  analogWrite(ENA,100);
-  analogWrite(ENB,0);
-}
 
-void left(){
-  digitalWrite(inp1,HIGH);
-  digitalWrite(inp2,LOW);
-  digitalWrite(inp3,HIGH);
-  digitalWrite(inp4,LOW);
-  analogWrite(ENA,0);
-  analogWrite(ENB,100);
-}
-void stop(){
-    digitalWrite(inp1,HIGH);
-  digitalWrite(inp2,LOW);
-  digitalWrite(inp3,HIGH);
-  digitalWrite(inp4,LOW);
-  analogWrite(ENA,0);
-  analogWrite(ENB,0);
-  Serial.println("stop");
-}
-void compute_PID(int positionVal)
-{
-    error = setpoint - positionVal;  
-    P = error;
-    I = I + error;
-    D = error-lastError;
-    motorSpeed = Kp*P + Ki*I + Kd*D;   
-    lastError = error; 
-    // Serial.println(motorSpeed);
-
-    int rightMotorSpeed = baseSpeed + (int)motorSpeed;
-    int leftMotorSpeed = baseSpeed - (int)motorSpeed;
-
-    if(rightMotorSpeed > maxSpeed)
-    { 
-      rightMotorSpeed = maxSpeed;
-    }
-    if(leftMotorSpeed > maxSpeed) {
-      leftMotorSpeed = maxSpeed;
-    }
-    if(rightMotorSpeed < 0) {
-
-      rightMotorSpeed = 0;
-    }
-    if(leftMotorSpeed < 0) 
-    {
-      leftMotorSpeed = 0;
-    }
-    // Serial.println("L %d\n",leftMotorSpeed);
-    // Serial.println("R %d\n",rightMotorSpeed);
-    forwards(rightMotorSpeed,leftMotorSpeed);
-  }
 
 
 void setup() {
@@ -108,16 +33,16 @@ void setup() {
   pinMode(ENB, OUTPUT);
   pinMode(serialEn,OUTPUT);   
   pinMode(junctionPulse,INPUT); 
-  Serial2.begin(115200);
-  Serial.begin(115200);
+  Serial2.begin(230400);
+  Serial.begin(230400);
   digitalWrite(serialEn,HIGH);
   digitalWrite(ENA,LOW);
   digitalWrite(ENB,LOW);
 
-  digitalWrite(inp1,HIGH);
-  digitalWrite(inp2,LOW);
-  digitalWrite(inp3,HIGH);
-  digitalWrite(inp4,LOW);
+  digitalWrite(inp1,LOW);
+  digitalWrite(inp2,HIGH);
+  digitalWrite(inp3,LOW);
+  digitalWrite(inp4,HIGH);
 
   Serial.flush();
   Serial2.flush();
@@ -125,16 +50,40 @@ void setup() {
 }
 
    
-
+int lastError = 0; 
 void loop() {
   digitalWrite(serialEn,LOW);  
-  if(Serial1.available() ){ 
-  positionVal = Serial1.read();  
-  Serial.println(positionVal);   
+  if(Serial2.available()){ 
+  positionVal = Serial2.read();  
+  // Serial.println(positionVal);   
   if(positionVal == 255) {
-    stop();
-  }else{
-      compute_PID(positionVal);
+  analogWrite(ENA,0);
+  analogWrite(ENB,0);
+  Serial.println("Stop");
+  }{
+  digitalWrite(inp1,LOW);
+
+    
+    error = setpoint - positionVal;  
+    P = error;
+    I = I + error;
+    D = error-lastError;
+    motorSpeed = Kp*P + Ki*I + Kd*D;   
+    lastError = error; 
+    // Serial.println(motorSpeed);
+
+    int rightMotorSpeed = baseSpeed + (int)motorSpeed;
+    int leftMotorSpeed = baseSpeed - (int)motorSpeed;
+
+      rightMotorSpeed = constrain(rightMotorSpeed, 0, maxSpeed);
+      leftMotorSpeed = constrain(leftMotorSpeed, 0, maxSpeed);
+
+    Serial.print("leftMotorSpeed  ");
+    Serial.println(leftMotorSpeed);
+    Serial.print("rightMotorSpeed  ");
+    Serial.println(rightMotorSpeed);
+    analogWrite(ENA,leftMotorSpeed);
+  analogWrite(ENB,rightMotorSpeed);
   }
     digitalWrite(serialEn,HIGH); 
   }

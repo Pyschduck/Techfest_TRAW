@@ -66,18 +66,18 @@ void loop() {
 
   if (ly > 10)
   {
-    forwards(map(ly, 0, 127, 0, 255));
+    forwards(map(ly, -127, 127, 0, 255));
   } 
   else if (ly < -10) 
   {
-    backwards(map(ly, -0, -127, 0, 255));
+    backwards(map(ly, -127, 127, 0, 255));
   }
   else if (rx > 10) 
   {
-    right(map(rx, 0, 127, 0, 255));
+    right(map(rx, -127, 127, 0, 255));
   } 
   else if (rx < -10) {
-    left(map(rx, -0, -127, 0, 255));
+    left(map(rx, -127, 127, 0, 255));
   } 
   else {
     stop();
